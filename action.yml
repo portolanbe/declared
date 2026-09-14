@@ -1,0 +1,29 @@
+name: declared - AI contribution policy
+description: Check pull requests against your AI contribution policy. Reads disclosures; never guesses. Zero dependencies.
+author: declared contributors
+branding:
+  icon: check-circle
+  color: green
+
+inputs:
+  github-token:
+    description: Token used to read the pull request and write the comment and labels.
+    default: ${{ github.token }}
+  config:
+    description: Path of the policy file, read from the base branch.
+    default: .github/ai-policy.yml
+  comment:
+    description: Override the policy's `comment` setting ("true" or "false"). Empty uses the policy.
+    default: ''
+
+outputs:
+  status:
+    description: pass, warn, fail or skip
+  level:
+    description: The declared disclosure level, if any
+  tools:
+    description: Comma-separated Assisted-by values from the description and commits
+
+runs:
+  using: node24
+  main: src/action.js

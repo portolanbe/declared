@@ -1,0 +1,29 @@
+{
+  "name": "declared",
+  "version": "0.1.0",
+  "description": "AI contribution policy as code: one config drives your AI_POLICY.md, PR template and a zero-dependency GitHub Action that checks disclosures.",
+  "type": "module",
+  "bin": {
+    "declared": "bin/declared.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "action.yml"
+  ],
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18.3"
+  },
+  "keywords": [
+    "ai-policy",
+    "ai-disclosure",
+    "github-action",
+    "open-source",
+    "maintainers",
+    "assisted-by"
+  ],
+  "license": "MIT"
+}

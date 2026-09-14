@@ -1,0 +1,1676 @@
+<title>declared policy builder</title>
+<meta name="description" content="Build an AI contribution policy for your repository and preview how pull requests will be checked.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Saira+Stencil+One&display=swap">
+<style>
+  :root {
+    --paper: #eef2ec;
+    --sheet: #f8faf6;
+    --ink: #1c2823;
+    --ink-soft: #4d5d55;
+    --rule: #b7c5bc;
+    --rule-soft: #d8e1da;
+    --stamp: #5537c8;
+    --stamp-wash: #e7e2fa;
+    --pass: #2e7a4e;
+    --warn: #9a6200;
+    --held: #b0342a;
+    --code-bg: #e4ebe5;
+    --focus: #5537c8;
+    --shadow: 0 1px 0 #d2dcd4, 0 10px 30px -18px rgb(28 40 35 / 0.35);
+
+    --f-display: "Saira Stencil One", "Arial Narrow", Impact, sans-serif;
+    --f-body: "Public Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+    --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+    --s-xs: 0.75rem;
+    --s-sm: 0.8125rem;
+    --s-base: 0.9375rem;
+    --s-md: 1.0625rem;
+    --s-lg: 1.375rem;
+    --s-xl: 2.5rem;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #111714;
+      --sheet: #18201c;
+      --ink: #dde7e1;
+      --ink-soft: #9aaba2;
+      --rule: #3a4a42;
+      --rule-soft: #27322c;
+      --stamp: #a897ff;
+      --stamp-wash: #2a2448;
+      --pass: #6fc596;
+      --warn: #e0a64a;
+      --held: #f0877c;
+      --code-bg: #0c110e;
+      --focus: #a897ff;
+      --shadow: 0 1px 0 #0a0e0c, 0 12px 30px -18px rgb(0 0 0 / 0.7);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #111714;
+    --sheet: #18201c;
+    --ink: #dde7e1;
+    --ink-soft: #9aaba2;
+    --rule: #3a4a42;
+    --rule-soft: #27322c;
+    --stamp: #a897ff;
+    --stamp-wash: #2a2448;
+    --pass: #6fc596;
+    --warn: #e0a64a;
+    --held: #f0877c;
+    --code-bg: #0c110e;
+    --focus: #a897ff;
+    --shadow: 0 1px 0 #0a0e0c, 0 12px 30px -18px rgb(0 0 0 / 0.7);
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--f-body);
+    font-size: var(--s-base);
+    line-height: 1.5;
+    padding: 0 clamp(16px, 4vw, 48px);
+  }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  code, pre, textarea.mono { font-family: var(--f-mono); }
+
+  .wrap { max-width: 1280px; margin: 0 auto; padding-block: 28px 64px; display: grid; gap: 28px; }
+
+  /* ---------- masthead ---------- */
+  .masthead { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 32px; border-bottom: 2px solid var(--ink); padding-bottom: 14px; }
+  .mark { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+  .mark h1 { font-family: var(--f-display); font-weight: 400; font-size: var(--s-xl); line-height: 1; margin: 0; letter-spacing: 0.01em; }
+  .mark .form-no { font-family: var(--f-mono); font-size: var(--s-xs); color: var(--ink-soft); letter-spacing: 0.06em; text-transform: uppercase; }
+  .masthead p { margin: 0; max-width: 58ch; color: var(--ink-soft); text-wrap: pretty; }
+  .masthead p strong { color: var(--ink); font-weight: 600; }
+
+  .layout { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 28px; align-items: start; }
+  @media (max-width: 960px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+
+  .section-title { font-size: var(--s-xs); font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; margin: 0 0 10px; color: var(--ink-soft); display: flex; justify-content: space-between; gap: 12px; }
+
+  /* ---------- the declaration form ---------- */
+  .form { background: var(--sheet); border: 1.5px solid var(--ink); box-shadow: var(--shadow); }
+  .form-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1.5px solid var(--ink); font-size: var(--s-xs); letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; }
+  .form-head span:last-child { font-family: var(--f-mono); font-weight: 400; letter-spacing: 0.02em; text-transform: none; color: var(--ink-soft); }
+  .box { padding: 12px 14px 14px; border-bottom: 1px solid var(--rule); display: grid; gap: 8px; }
+  .box:last-child { border-bottom: 0; }
+  .box-row { display: grid; grid-template-columns: 1fr 1fr; }
+  .box-row > .box + .box { border-left: 1px solid var(--rule); }
+  @media (max-width: 480px) { .box-row { grid-template-columns: 1fr; } .box-row > .box + .box { border-left: 0; } }
+  .box-label { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; font-size: var(--s-sm); font-weight: 600; }
+  .box-label code { font-size: 0.6875rem; color: var(--ink-soft); font-weight: 400; white-space: nowrap; }
+  .hint { font-size: var(--s-xs); color: var(--ink-soft); margin: 0; }
+
+  input[type="text"], input[type="number"], select, textarea {
+    width: 100%; font: inherit; color: var(--ink); background: var(--paper);
+    border: 1px solid var(--rule); border-bottom: 1.5px solid var(--ink); border-radius: 0; padding: 7px 9px;
+  }
+  textarea { resize: vertical; line-height: 1.45; font-size: var(--s-sm); }
+  select { appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--ink) 50%), linear-gradient(135deg, var(--ink) 50%, transparent 50%); background-position: calc(100% - 15px) 55%, calc(100% - 10px) 55%; background-size: 5px 5px; background-repeat: no-repeat; padding-right: 28px; }
+
+  .presets { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; border: 1px solid var(--rule); }
+  .preset { position: relative; display: grid; gap: 2px; padding: 9px 10px 10px 34px; cursor: pointer; border-right: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+  .preset:nth-child(2n) { border-right: 0; }
+  .preset:nth-last-child(-n + 2) { border-bottom: 0; }
+  .preset input { position: absolute; left: 11px; top: 12px; accent-color: var(--stamp); margin: 0; }
+  .preset b { font-family: var(--f-mono); font-size: var(--s-sm); font-weight: 500; }
+  .preset span { font-size: var(--s-xs); color: var(--ink-soft); line-height: 1.35; }
+  .preset:has(input:checked) { background: var(--stamp-wash); }
+  @media (max-width: 480px) { .presets { grid-template-columns: 1fr; } .preset { border-right: 0; } .preset:nth-last-child(2) { border-bottom: 1px solid var(--rule); } }
+
+  .checks { display: grid; gap: 2px; }
+  .check { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; align-items: start; padding: 5px 0; cursor: pointer; }
+  .check input { margin: 3px 0 0; width: 16px; height: 16px; accent-color: var(--stamp); }
+  .check .t { font-size: var(--s-sm); }
+  .check .t code { font-size: 0.75rem; background: var(--code-bg); padding: 0 4px; }
+  .check .d { grid-column: 2; font-size: var(--s-xs); color: var(--ink-soft); }
+  .levels { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 16px; }
+  @media (max-width: 480px) { .levels { grid-template-columns: 1fr; } }
+
+  /* ---------- output files ---------- */
+  .right { display: grid; gap: 28px; min-width: 0; }
+  .files { background: var(--sheet); border: 1px solid var(--rule); min-width: 0; }
+  .tabs { display: flex; overflow-x: auto; border-bottom: 1px solid var(--rule); scrollbar-width: thin; }
+  .tab { flex: none; font: 500 var(--s-xs)/1 var(--f-mono); color: var(--ink-soft); background: transparent; border: 0; border-right: 1px solid var(--rule-soft); padding: 12px 14px; cursor: pointer; white-space: nowrap; }
+  .tab[aria-selected="true"] { color: var(--ink); background: var(--code-bg); box-shadow: inset 0 -2px 0 var(--stamp); }
+  .file-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 16px; padding: 8px 12px; border-bottom: 1px solid var(--rule-soft); font-size: var(--s-xs); color: var(--ink-soft); }
+  .file-bar code { color: var(--ink); }
+  .btn { font: 600 var(--s-xs)/1 var(--f-body); letter-spacing: 0.04em; color: var(--sheet); background: var(--ink); border: 0; padding: 8px 12px; cursor: pointer; }
+  .btn:hover { background: var(--stamp); }
+  .code { margin: 0; padding: 14px 16px; background: var(--code-bg); overflow: auto; max-height: 440px; font-size: 0.78rem; line-height: 1.55; tab-size: 2; color: var(--ink); }
+  .error { margin: 0; padding: 14px 16px; color: var(--held); font-size: var(--s-sm); white-space: pre-wrap; }
+  .cmd { font-size: var(--s-xs); color: var(--ink-soft); padding: 10px 12px; border-top: 1px solid var(--rule-soft); }
+  .cmd code { color: var(--ink); background: var(--code-bg); padding: 2px 6px; word-break: break-all; }
+
+  /* ---------- try it ---------- */
+  .trial { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 20px; align-items: start; }
+  @media (max-width: 720px) { .trial { grid-template-columns: minmax(0, 1fr); } }
+  .trial-inputs { display: grid; gap: 12px; }
+  .field { display: grid; gap: 5px; }
+  .field label { font-size: var(--s-sm); font-weight: 600; display: flex; justify-content: space-between; gap: 8px; }
+  .field label small { font-weight: 400; color: var(--ink-soft); font-size: var(--s-xs); }
+  .example-note { font-size: var(--s-xs); color: var(--ink-soft); margin: 0; font-style: italic; }
+
+  .comment { position: relative; background: var(--sheet); border: 1px solid var(--rule); box-shadow: var(--shadow); min-width: 0; overflow: hidden; }
+  .comment-head { display: flex; align-items: center; gap: 8px; padding: 9px 14px; border-bottom: 1px solid var(--rule); background: var(--paper); font-size: var(--s-xs); color: var(--ink-soft); }
+  .comment-head b { color: var(--ink); font-weight: 600; }
+  .avatar { width: 20px; height: 20px; border-radius: 50%; background: var(--ink); display: grid; place-items: center; color: var(--sheet); font: 700 10px/1 var(--f-mono); }
+  .comment-body { padding: 4px 16px 16px; font-size: var(--s-sm); overflow-wrap: anywhere; }
+  .comment-body h4 { font-size: var(--s-md); margin: 12px 0 6px; padding-right: 128px; text-wrap: balance; line-height: 1.3; }
+  .comment-body p { margin: 8px 0; }
+  .comment-body ul { margin: 6px 0; padding-left: 20px; display: grid; gap: 4px; }
+  .comment-body code { font-size: 0.8em; background: var(--code-bg); padding: 1px 5px; }
+  .comment-body pre { background: var(--code-bg); padding: 10px 12px; overflow-x: auto; margin: 8px 0; font-size: 0.78rem; }
+  .comment-body pre code { background: none; padding: 0; }
+  .comment-body details summary { cursor: pointer; font-weight: 600; margin-top: 10px; }
+  .comment-body .sub { font-size: var(--s-xs); color: var(--ink-soft); }
+  .comment-body a { color: var(--stamp); }
+  .comment-body .quiet { color: var(--ink-soft); font-style: italic; }
+
+  .stamp {
+    position: absolute; top: 44px; right: 14px; transform: rotate(-9deg);
+    font-family: var(--f-display); font-size: 1.375rem; letter-spacing: 0.08em; line-height: 1;
+    color: var(--stamp-color, var(--stamp)); border: 3px double var(--stamp-color, var(--stamp)); padding: 7px 12px 5px;
+    opacity: 0.9; pointer-events: none; mix-blend-mode: multiply;
+  }
+  :root[data-theme="dark"] .stamp { mix-blend-mode: normal; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .stamp { mix-blend-mode: normal; } }
+  .stamp[data-status="pass"] { --stamp-color: var(--pass); }
+  .stamp[data-status="fail"] { --stamp-color: var(--held); }
+  .stamp[data-status="warn"] { --stamp-color: var(--warn); }
+  .stamp[data-status="skip"] { --stamp-color: var(--ink-soft); }
+  @media (prefers-reduced-motion: no-preference) {
+    .stamp.thump { animation: thump 260ms cubic-bezier(.2,.9,.3,1.3); }
+    @keyframes thump { from { transform: rotate(-9deg) scale(1.35); opacity: 0; } to { transform: rotate(-9deg) scale(1); opacity: 0.9; } }
+  }
+
+  .footer { border-top: 1px solid var(--rule); padding-top: 14px; font-size: var(--s-xs); color: var(--ink-soft); display: flex; flex-wrap: wrap; gap: 6px 24px; }
+  .footer code { color: var(--ink); }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+</style>
+
+<div class="wrap">
+  <header class="masthead">
+    <div class="mark">
+      <h1>declared</h1>
+      <span class="form-no">AI contribution policy · form v1</span>
+    </div>
+    <p>Fill in your project's AI policy and copy out four files: <strong>the policy config, AI_POLICY.md, a PR template section and the workflow</strong>. Then paste a pull request below to see exactly how it will be checked. Nothing here guesses whether code is AI-written; it only reads what contributors declare.</p>
+  </header>
+
+  <main class="layout">
+    <section aria-labelledby="form-title">
+      <h2 class="section-title" id="form-title"><span>Your policy</span><span>.github/ai-policy.yml</span></h2>
+      <form class="form" id="policy-form" autocomplete="off">
+        <div class="form-head"><span>Declaration of AI use</span><span id="hash-label">hash —</span></div>
+
+        <div class="box">
+          <div class="box-label"><label for="project">Project name</label><code>project</code></div>
+          <input type="text" id="project" value="widgets" spellcheck="false">
+        </div>
+
+        <fieldset class="box" style="border-left:0;border-right:0;border-top:0;margin:0;min-width:0">
+          <legend class="sr">Starting preset</legend>
+          <div class="box-label"><span>Start from a preset</span><code>preset</code></div>
+          <div class="presets" id="presets"></div>
+          <p class="hint">Choosing a preset resets the fields below. Your edits after that override it.</p>
+        </fieldset>
+
+        <fieldset class="box" style="border-left:0;border-right:0;border-top:0;margin:0;min-width:0">
+          <legend class="sr">Accepted disclosure levels</legend>
+          <div class="box-label"><span>Accepted levels</span><code>allowed-levels</code></div>
+          <div class="checks levels" id="levels"></div>
+        </fieldset>
+
+        <fieldset class="box" style="border-left:0;border-right:0;border-top:0;margin:0;min-width:0">
+          <legend class="sr">Requirements</legend>
+          <div class="box-label"><span>When AI helped, the PR must…</span><code>require.*</code></div>
+          <div class="checks" id="requires"></div>
+        </fieldset>
+
+        <fieldset class="box" style="border-left:0;border-right:0;border-top:0;margin:0;min-width:0">
+          <legend class="sr">Extra checks</legend>
+          <div class="box-label"><span>Extra checks</span><code>consistency · media</code></div>
+          <div class="checks">
+            <label class="check" for="consistency"><input type="checkbox" id="consistency"><span class="t">Compare the declaration with AI trailers in commits</span><span class="d">A PR that says <code>none</code> but whose commits carry a <code>Co-authored-by</code> from an AI tool gets a gentle note.</span></label>
+            <label class="check" for="media"><input type="checkbox" id="media"><span class="t">No AI-generated images, audio or video</span><span class="d">PRs that add media files tick a box confirming they were made without AI.</span></label>
+          </div>
+        </fieldset>
+
+        <div class="box-row">
+          <div class="box">
+            <div class="box-label"><label for="cap">First-PR line cap</label><code>max-changed-lines</code></div>
+            <input type="number" id="cap" min="0" step="50" value="0" inputmode="numeric">
+            <p class="hint">For AI-assisted first contributions. 0 = no cap.</p>
+          </div>
+          <div class="box">
+            <div class="box-label"><label for="enforcement">When rules aren't met</label><code>enforcement</code></div>
+            <select id="enforcement">
+              <option value="fail">Fail the check</option>
+              <option value="warn">Comment only</option>
+            </select>
+            <p class="hint">Either way, contributors get a comment explaining the fix.</p>
+          </div>
+        </div>
+
+        <div class="box-row">
+          <div class="box">
+            <div class="box-label"><label for="drafts">Draft PRs</label><code>drafts</code></div>
+            <select id="drafts">
+              <option value="warn">Comment, don't block</option>
+              <option value="enforce">Check like any PR</option>
+              <option value="skip">Skip</option>
+            </select>
+          </div>
+          <div class="box">
+            <div class="box-label"><label for="uses">Action reference</label><code>uses</code></div>
+            <input type="text" id="uses" value="OWNER/declared@v1" spellcheck="false">
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <div class="right">
+      <section aria-labelledby="files-title">
+        <h2 class="section-title" id="files-title"><span>Files to commit</span><span id="file-count">4 files</span></h2>
+        <div class="files">
+          <div class="tabs" role="tablist" aria-label="Generated files" id="tabs"></div>
+          <div class="file-bar"><span>Save as <code id="file-path">.github/ai-policy.yml</code></span><button type="button" class="btn" id="copy">Copy file</button></div>
+          <pre class="code" id="file-body" role="tabpanel" tabindex="0" aria-live="polite"></pre>
+          <div class="cmd">Prefer a terminal? <code id="cli-cmd">npx declared init --preset disclose</code></div>
+        </div>
+      </section>
+
+      <section aria-labelledby="trial-title">
+        <h2 class="section-title" id="trial-title"><span>Try a pull request</span><span>live preview</span></h2>
+        <div class="trial">
+          <div class="trial-inputs">
+            <p class="example-note">An example PR is filled in. Edit it to see the verdict change.</p>
+            <div class="field">
+              <label for="sample-body">PR description</label>
+              <textarea id="sample-body" class="mono" rows="7" spellcheck="false"></textarea>
+            </div>
+            <div class="field">
+              <label for="sample-commits">Commit messages <small>separate commits with ---</small></label>
+              <textarea id="sample-commits" class="mono" rows="5" spellcheck="false"></textarea>
+            </div>
+            <div class="box-row" style="gap:12px;display:grid">
+              <div class="field">
+                <label for="sample-files">Changed files</label>
+                <input type="text" id="sample-files" value="src/cache.js, test/cache.test.js" spellcheck="false">
+              </div>
+              <div class="field">
+                <label for="sample-author">Author</label>
+                <select id="sample-author">
+                  <option value="CONTRIBUTOR">Returning contributor</option>
+                  <option value="FIRST_TIME_CONTRIBUTOR">First-time contributor</option>
+                  <option value="MEMBER">Project member</option>
+                </select>
+              </div>
+            </div>
+            <div class="field">
+              <label for="sample-lines">Lines changed</label>
+              <input type="number" id="sample-lines" min="0" value="120" inputmode="numeric">
+            </div>
+          </div>
+
+          <div class="comment" aria-live="polite">
+            <div class="comment-head"><span class="avatar" aria-hidden="true">A</span><b>github-actions</b> bot commented</div>
+            <div class="stamp" id="stamp" data-status="fail">HELD</div>
+            <div class="comment-body" id="comment-body"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <span>Levels follow the W3C AI Content Disclosure vocabulary; <code>Assisted-by: Tool:model</code> follows the Linux kernel.</span>
+    <span>This page runs the same code as the action. Nothing you type leaves the page.</span>
+  </footer>
+</div>
+
+<script>
+window.Declared = (() => {
+'use strict';
+// ---- src/yaml.js ----
+// A small, strict YAML subset parser — enough for a config file, with no
+// dependencies so the Action runs without `npm install`.
+//
+// Supported: block mappings, block sequences of scalars, flow sequences
+// ([a, b]), plain / 'single' / "double" quoted scalars, true/false, null/~,
+// numbers, `#` comments, and `|` / `>` block scalars.
+// Not supported (rejected with a clear error): anchors, tags, mappings
+// nested inside sequences, flow mappings with content.
+
+class YamlError extends Error {
+  constructor(message, line) {
+    super(line ? `line ${line}: ${message}` : message);
+    this.name = 'YamlError';
+    this.line = line;
+  }
+}
+
+function parseYaml(src) {
+  const parser = new Parser(String(src));
+  const value = parser.parseNode(-1);
+  const rest = parser.peek();
+  if (rest) throw new YamlError(`unexpected content "${rest.text}" (check indentation)`, rest.line);
+  return value ?? {};
+}
+
+class Parser {
+  constructor(src) {
+    this.lines = src.replace(/^﻿/, '').replace(/\r\n?/g, '\n').split('\n');
+    this.i = 0;
+  }
+
+  peek() {
+    while (this.i < this.lines.length) {
+      const raw = this.lines[this.i];
+      const text = stripComment(raw);
+      const trimmed = text.trim();
+      if (trimmed === '' || trimmed === '---' || trimmed === '...') {
+        this.i++;
+        continue;
+      }
+      if (/^ *\t/.test(raw)) throw new YamlError('tabs are not allowed for indentation; use spaces', this.i + 1);
+      if (/^[&*!]/.test(trimmed) || /:\s+[&*!]/.test(trimmed)) {
+        throw new YamlError('anchors, aliases and tags are not supported', this.i + 1);
+      }
+      return { indent: text.match(/^ */)[0].length, text: trimmed, line: this.i + 1 };
+    }
+    return null;
+  }
+
+  parseNode(parentIndent) {
+    const t = this.peek();
+    if (!t || t.indent <= parentIndent) return null;
+    return isSeqItem(t.text) ? this.parseSeq(t.indent) : this.parseMap(t.indent);
+  }
+
+  parseSeq(indent) {
+    const out = [];
+    for (let t = this.peek(); t && t.indent >= indent; t = this.peek()) {
+      if (t.indent > indent) throw new YamlError('unexpected indentation inside list', t.line);
+      if (!isSeqItem(t.text)) break;
+      this.i++;
+      const rest = t.text.slice(1).trim();
+      if (rest === '') {
+        const nested = this.parseNode(indent);
+        if (nested !== null && !Array.isArray(nested)) {
+          throw new YamlError('mappings inside lists are not supported', t.line + 1);
+        }
+        out.push(nested);
+      } else if (matchKey(rest)) {
+        throw new YamlError(`mappings inside lists are not supported ("${rest}"); quote the value if it is text`, t.line);
+      } else {
+        out.push(parseScalar(rest, t.line));
+      }
+    }
+    return out;
+  }
+
+  parseMap(indent) {
+    const out = {};
+    for (let t = this.peek(); t && t.indent >= indent; t = this.peek()) {
+      if (t.indent > indent) throw new YamlError('unexpected indentation', t.line);
+      if (isSeqItem(t.text)) throw new YamlError('list item where a "key: value" was expected', t.line);
+      const m = matchKey(t.text);
+      if (!m) throw new YamlError(`expected "key: value", got "${t.text}"`, t.line);
+      const [key, rest] = m;
+      if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
+        throw new YamlError(`key "${key}" is not allowed`, t.line);
+      }
+      if (Object.hasOwn(out, key)) throw new YamlError(`duplicate key "${key}"`, t.line);
+      this.i++;
+      if (rest === '') {
+        const next = this.peek();
+        // YAML allows a list at the same indentation as its key.
+        out[key] = next && next.indent === indent && isSeqItem(next.text)
+          ? this.parseSeq(indent)
+          : this.parseNode(indent);
+      } else if (/^[|>][-+]?$/.test(rest)) {
+        out[key] = this.parseBlockScalar(indent, rest);
+      } else {
+        out[key] = parseScalar(rest, t.line);
+      }
+    }
+    return out;
+  }
+
+  parseBlockScalar(indent, header) {
+    const lines = [];
+    let blockIndent = null;
+    while (this.i < this.lines.length) {
+      const raw = this.lines[this.i];
+      if (raw.trim() === '') {
+        lines.push('');
+        this.i++;
+        continue;
+      }
+      const ind = raw.match(/^ */)[0].length;
+      if (blockIndent === null) {
+        if (ind <= indent) break;
+        blockIndent = ind;
+      }
+      if (ind < blockIndent) break;
+      lines.push(raw.slice(blockIndent));
+      this.i++;
+    }
+    while (lines.length && lines[lines.length - 1] === '') lines.pop();
+    const text = header[0] === '|' ? lines.join('\n') : fold(lines);
+    return header[1] === '-' || text === '' ? text : `${text}\n`;
+  }
+}
+
+function isSeqItem(text) {
+  return text === '-' || text.startsWith('- ');
+}
+
+const KEY_RE = /^("(?:[^"\\]|\\.)*"|'(?:[^']|'')*'|[^\s"'#\-[\]{},][^:#]*?|-[^\s:#][^:#]*?)\s*:(?:\s+(.*))?$/;
+
+function matchKey(text) {
+  const m = KEY_RE.exec(text);
+  if (!m) return null;
+  let key = m[1];
+  if (key.startsWith('"')) key = JSON.parse(key);
+  else if (key.startsWith("'")) key = key.slice(1, -1).replace(/''/g, "'");
+  return [key, (m[2] ?? '').trim()];
+}
+
+function stripComment(line) {
+  let quote = null;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (quote) {
+      if (quote === '"' && c === '\\') i++;
+      else if (c === quote) {
+        if (quote === "'" && line[i + 1] === "'") i++;
+        else quote = null;
+      }
+      continue;
+    }
+    if ((c === '"' || c === "'") && (i === 0 || /[\s[,:{-]/.test(line[i - 1]))) quote = c;
+    else if (c === '#' && (i === 0 || /\s/.test(line[i - 1]))) return line.slice(0, i);
+  }
+  return line;
+}
+
+function fold(lines) {
+  let out = '';
+  for (const l of lines) {
+    if (l === '') out += '\n';
+    else if (out === '' || out.endsWith('\n')) out += l;
+    else out += ` ${l}`;
+  }
+  return out;
+}
+
+function splitFlow(inner, line) {
+  const items = [];
+  let buf = '';
+  let quote = null;
+  for (let i = 0; i < inner.length; i++) {
+    const c = inner[i];
+    if (quote) {
+      buf += c;
+      if (quote === '"' && c === '\\') buf += inner[++i] ?? '';
+      else if (c === quote) quote = null;
+    } else if (c === '"' || c === "'") {
+      quote = c;
+      buf += c;
+    } else if (c === ',') {
+      items.push(buf);
+      buf = '';
+    } else if (c === '[' || c === ']' || c === '{' || c === '}') {
+      throw new YamlError('nested flow collections are not supported', line);
+    } else {
+      buf += c;
+    }
+  }
+  if (quote) throw new YamlError('unterminated quote in list', line);
+  if (buf.trim() !== '' || items.length) items.push(buf);
+  return items.map((s) => s.trim()).filter((s, idx, arr) => s !== '' || idx < arr.length - 1);
+}
+
+function parseScalar(s, line) {
+  if (s.startsWith('"')) {
+    if (!/^"(?:[^"\\]|\\.)*"$/.test(s)) throw new YamlError(`malformed double-quoted string ${s}`, line);
+    try {
+      return JSON.parse(s);
+    } catch {
+      throw new YamlError(`unsupported escape sequence in ${s}`, line);
+    }
+  }
+  if (s.startsWith("'")) {
+    if (!/^'(?:[^']|'')*'$/.test(s)) throw new YamlError(`malformed single-quoted string ${s}`, line);
+    return s.slice(1, -1).replace(/''/g, "'");
+  }
+  if (s.startsWith('[')) {
+    if (!s.endsWith(']')) throw new YamlError(`unterminated list ${s}`, line);
+    return splitFlow(s.slice(1, -1), line).map((item) => parseScalar(item, line));
+  }
+  if (s.startsWith('{')) {
+    if (/^\{\s*\}$/.test(s)) return {};
+    throw new YamlError('inline {mappings} are not supported; use indented keys', line);
+  }
+  if (/^(true|True|TRUE)$/.test(s)) return true;
+  if (/^(false|False|FALSE)$/.test(s)) return false;
+  if (/^(null|Null|NULL|~)$/.test(s)) return null;
+  if (/^[-+]?\d+$/.test(s)) return Number.parseInt(s, 10);
+  if (/^[-+]?(\d+\.\d*|\.\d+)([eE][-+]?\d+)?$/.test(s)) return Number.parseFloat(s);
+  return s;
+}
+
+// ---- src/policy.js ----
+
+// Disclosure vocabulary, aligned with the W3C AI Content Disclosure levels
+// used by the ai-disclosure convention (SPDX-AI-Disclosure).
+const LEVELS = ['none', 'ai-assisted', 'ai-generated', 'autonomous'];
+
+const LEVEL_INFO = {
+  none: 'No AI tools were used.',
+  'ai-assisted': 'Written by a person; AI helped edit, refine, or fill in boilerplate.',
+  'ai-generated': 'AI wrote substantial parts; a person prompted it, reviewed the result, and understands it.',
+  autonomous: 'AI produced it without meaningful human review.',
+};
+
+const MEDIA_EXTENSIONS = [
+  'png', 'jpg', 'jpeg', 'gif', 'webp', 'avif', 'svg', 'ico', 'bmp', 'tif', 'tiff', 'psd',
+  'mp3', 'wav', 'ogg', 'flac', 'm4a', 'aac', 'mp4', 'mov', 'webm', 'mkv', 'avi',
+];
+
+const DEFAULTS = {
+  version: 1,
+  preset: 'disclose',
+  project: '',
+  'policy-url': 'AI_POLICY.md',
+  'allowed-levels': ['none', 'ai-assisted', 'ai-generated'],
+  require: {
+    disclosure: true,
+    tool: true,
+    scope: false,
+    attestation: true,
+    'commit-trailers': false,
+  },
+  consistency: true,
+  media: {
+    'forbid-ai-generated': false,
+    extensions: MEDIA_EXTENSIONS,
+  },
+  'first-time-contributors': {
+    'max-changed-lines': 0,
+  },
+  exempt: {
+    authors: ['dependabot[bot]', 'renovate[bot]', 'github-actions[bot]'],
+    associations: ['OWNER', 'MEMBER'],
+    labels: ['skip-ai-policy'],
+  },
+  drafts: 'warn',
+  enforcement: 'fail',
+  comment: true,
+  labels: {
+    none: '',
+    'ai-assisted': 'ai-assisted',
+    'ai-generated': 'ai-generated',
+    autonomous: 'ai-autonomous',
+    missing: 'needs-ai-disclosure',
+  },
+  'extra-signatures': [],
+  notes: '',
+};
+
+const PRESETS = {
+  open: {
+    summary: 'AI welcome. Disclosure is requested and labelled, but never blocks a PR.',
+    config: {
+      'allowed-levels': ['none', 'ai-assisted', 'ai-generated', 'autonomous'],
+      require: { disclosure: true, tool: false, scope: false, attestation: false, 'commit-trailers': false },
+      enforcement: 'warn',
+    },
+  },
+  disclose: {
+    summary: 'AI welcome with disclosure: say which tool, and confirm a human reviewed it.',
+    config: {},
+  },
+  strict: {
+    summary: 'Disclosure with tool, scope and commit trailers; no AI media; small first PRs.',
+    config: {
+      'allowed-levels': ['none', 'ai-assisted', 'ai-generated'],
+      require: { disclosure: true, tool: true, scope: true, attestation: true, 'commit-trailers': true },
+      media: { 'forbid-ai-generated': true },
+      'first-time-contributors': { 'max-changed-lines': 400 },
+      drafts: 'enforce',
+    },
+  },
+  'human-only': {
+    summary: 'No AI-generated contributions. Contributors confirm no AI tools were used.',
+    config: {
+      'allowed-levels': ['none'],
+      require: { disclosure: true, tool: false, scope: false, attestation: false, 'commit-trailers': false },
+      media: { 'forbid-ai-generated': true },
+    },
+  },
+};
+
+const ENUMS = {
+  drafts: ['warn', 'enforce', 'skip'],
+  enforcement: ['fail', 'warn'],
+};
+
+class PolicyError extends Error {
+  constructor(problems) {
+    super(`Invalid AI policy config:\n${problems.map((p) => `  - ${p}`).join('\n')}`);
+    this.name = 'PolicyError';
+    this.problems = problems;
+  }
+}
+
+function isPlainObject(v) {
+  return v !== null && typeof v === 'object' && !Array.isArray(v);
+}
+
+function deepMerge(base, over) {
+  const out = { ...base };
+  for (const [k, v] of Object.entries(over)) {
+    out[k] = isPlainObject(v) && isPlainObject(base[k]) ? deepMerge(base[k], v) : v;
+  }
+  return out;
+}
+
+function editDistance(a, b) {
+  const dp = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+  for (let j = 1; j <= b.length; j++) dp[0][j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    }
+  }
+  return dp[a.length][b.length];
+}
+
+function suggest(key, candidates) {
+  const best = candidates
+    .map((c) => [c, editDistance(key, c)])
+    .sort((x, y) => x[1] - y[1])[0];
+  return best && best[1] <= Math.max(2, Math.floor(key.length / 3)) ? ` (did you mean "${best[0]}"?)` : '';
+}
+
+function checkShape(value, template, path, problems) {
+  for (const [k, v] of Object.entries(value)) {
+    const where = path ? `${path}.${k}` : k;
+    if (!Object.hasOwn(template, k)) {
+      problems.push(`unknown key "${where}"${suggest(k, Object.keys(template))}`);
+      continue;
+    }
+    const expected = template[k];
+    if (isPlainObject(expected)) {
+      if (!isPlainObject(v)) problems.push(`"${where}" must be a mapping of keys`);
+      else checkShape(v, expected, where, problems);
+    } else if (Array.isArray(expected)) {
+      if (!Array.isArray(v)) problems.push(`"${where}" must be a list, e.g. [a, b]`);
+      else if (v.some((item) => typeof item !== 'string')) problems.push(`"${where}" must contain only text values`);
+    } else if (typeof expected !== typeof v) {
+      problems.push(`"${where}" must be ${typeof expected === 'boolean' ? 'true or false' : `a ${typeof expected}`}`);
+    }
+  }
+}
+
+/** Build a complete policy from a user config object (already parsed). */
+function resolvePolicy(userConfig = {}) {
+  const problems = [];
+  if (!isPlainObject(userConfig)) throw new PolicyError(['the config file must be a mapping of keys']);
+  checkShape(userConfig, DEFAULTS, '', problems);
+
+  const presetName = userConfig.preset ?? DEFAULTS.preset;
+  const preset = PRESETS[presetName];
+  if (!preset) {
+    problems.push(`unknown preset "${presetName}"${suggest(String(presetName), Object.keys(PRESETS))}; choose one of: ${Object.keys(PRESETS).join(', ')}`);
+  }
+  if (problems.length) throw new PolicyError(problems);
+
+  const policy = deepMerge(deepMerge(DEFAULTS, preset.config), userConfig);
+
+  if (policy.version !== 1) problems.push(`unsupported version ${policy.version}; this tool understands version 1`);
+  for (const [key, allowed] of Object.entries(ENUMS)) {
+    if (!allowed.includes(policy[key])) problems.push(`"${key}" must be one of: ${allowed.join(', ')}`);
+  }
+  if (!policy['allowed-levels'].length) problems.push('"allowed-levels" must list at least one level');
+  for (const level of policy['allowed-levels']) {
+    if (!LEVELS.includes(level)) {
+      problems.push(`unknown level "${level}" in allowed-levels${suggest(level, LEVELS)}; levels are: ${LEVELS.join(', ')}`);
+    }
+  }
+  const max = policy['first-time-contributors']['max-changed-lines'];
+  if (!Number.isInteger(max) || max < 0) problems.push('"first-time-contributors.max-changed-lines" must be a whole number (0 = no limit)');
+  for (const sig of policy['extra-signatures']) {
+    try {
+      new RegExp(sig, 'i');
+    } catch {
+      problems.push(`"extra-signatures" entry is not a valid regular expression: ${sig}`);
+    }
+  }
+  if (problems.length) throw new PolicyError(problems);
+  return policy;
+}
+
+/** Parse YAML text (or null/empty for "no config file") into a policy. */
+function loadPolicy(text) {
+  if (text == null || String(text).trim() === '') return resolvePolicy({});
+  return resolvePolicy(parseYaml(text));
+}
+
+// ---- src/parse.js ----
+
+// Parses what contributors *declare*. Nothing here tries to guess whether
+// code was written by AI — that is unreliable and unfair. We only read the
+// PR description and the trailers that tools and people put in commits.
+
+const LEVEL_SYNONYMS = new Map([
+  ['none', 'none'],
+  ['no', 'none'],
+  ['no ai', 'none'],
+  ['human', 'none'],
+  ['ai-assisted', 'ai-assisted'],
+  ['assisted', 'ai-assisted'],
+  ['ai assisted', 'ai-assisted'],
+  ['ai-generated', 'ai-generated'],
+  ['generated', 'ai-generated'],
+  ['ai generated', 'ai-generated'],
+  ['autonomous', 'autonomous'],
+]);
+
+const DISCLOSURE_KEYS = /^(?:ai[-_ ]?disclosure|ai[-_ ]?assistance|ai[-_ ]?usage|ai[-_ ]?level|spdx-ai-disclosure)$/i;
+const TOOL_KEYS = /^(?:assisted[-_ ]by|generated[-_ ]by|ai[-_ ]?tools?)$/i;
+const SCOPE_KEYS = /^(?:ai[-_ ]?scope|spdx-ai-scope)$/i;
+const REVIEW_KEYS = /^(?:human[-_ ]?reviewed|reviewed[-_ ]by[-_ ]human)$/i;
+const MEDIA_KEYS = /^(?:ai[-_ ]?media)$/i;
+
+/** Normalise a level string; returns a LEVELS value or null. */
+function normalizeLevel(raw) {
+  const cleaned = String(raw).toLowerCase().replace(/[`*_]/g, '').replace(/\s+/g, ' ').trim();
+  if (LEVEL_SYNONYMS.has(cleaned)) return LEVEL_SYNONYMS.get(cleaned);
+  return LEVELS.includes(cleaned) ? cleaned : null;
+}
+
+/** Strip markdown decoration from a line: bullets, quotes, bold, code. */
+function cleanLine(line) {
+  return line
+    .replace(/^\s*(?:>\s*)*(?:[-*+]\s+)?/, '')
+    .replace(/\*\*|__/g, '')
+    .replace(/`/g, '')
+    .trim();
+}
+
+function splitKeyValue(line) {
+  const m = /^([A-Za-z][A-Za-z0-9 _-]{0,40}?)\s*:\s*(.*)$/.exec(line);
+  return m ? [m[1].trim(), m[2].trim()] : null;
+}
+
+/** Parse `Assisted-by: AGENT:MODEL [tool1] [tool2]` (Linux kernel format). */
+function parseTool(value) {
+  const v = value.trim();
+  if (!v) return null;
+  const idx = v.indexOf(':');
+  if (idx <= 0) return { raw: v, agent: v, model: null, tools: [] };
+  const [model = '', ...tools] = v.slice(idx + 1).trim().split(/\s+/);
+  return {
+    raw: v,
+    agent: v.slice(0, idx).trim(),
+    model: model || null,
+    tools: tools.map((t) => t.replace(/^\[|\]$/g, '')).filter(Boolean),
+  };
+}
+
+const CHECKBOX = /^\s*(?:>\s*)*[-*+]\s+\[([ xX])\]\s+(.*)$/;
+
+function isReviewAttestation(text) {
+  return /\breview/i.test(text) && /\b(understand|explain)/i.test(text);
+}
+
+function isMediaAttestation(text) {
+  return /\b(image|media|audio|video|artwork|graphic)/i.test(text) && /\b(not|no|none|human|without)\b/i.test(text);
+}
+
+function isPlaceholder(value) {
+  return value === '' || /^(?:<.*>|\.\.\.|tbd|todo|n\/a|-|_+)$/i.test(value);
+}
+
+/**
+ * Read the disclosure block from a PR description.
+ * Returns { levels, tools, scope, reviewed, mediaAttested, checkedLevels }.
+ */
+function parseDisclosure(body) {
+  const text = String(body ?? '').replace(/<\!--[\s\S]*?-->/g, '').replace(/\r\n?/g, '\n');
+  const result = {
+    levels: [],
+    invalidLevels: [],
+    tools: [],
+    scope: null,
+    reviewed: false,
+    mediaAttested: false,
+  };
+
+  for (const rawLine of text.split('\n')) {
+    const box = CHECKBOX.exec(rawLine);
+    if (box) {
+      const checked = box[1].toLowerCase() === 'x';
+      const label = cleanLine(box[2]);
+      if (!checked) continue;
+      const level = normalizeLevel(label.split(/\s[-—–:(]\s?/)[0]);
+      if (level) result.levels.push(level);
+      else if (isReviewAttestation(label)) result.reviewed = true;
+      else if (isMediaAttestation(label)) result.mediaAttested = true;
+      continue;
+    }
+
+    const kv = splitKeyValue(cleanLine(rawLine));
+    if (!kv) continue;
+    const [key, value] = kv;
+    if (DISCLOSURE_KEYS.test(key)) {
+      if (isPlaceholder(value)) continue;
+      const level = normalizeLevel(value);
+      if (level) result.levels.push(level);
+      else result.invalidLevels.push(value);
+    } else if (TOOL_KEYS.test(key)) {
+      if (isPlaceholder(value) || normalizeLevel(value) === 'none') continue;
+      for (const part of value.split(/\s*[;,]\s*/)) {
+        const tool = parseTool(part);
+        if (tool && tool.agent) result.tools.push(tool);
+      }
+    } else if (SCOPE_KEYS.test(key)) {
+      if (!isPlaceholder(value)) result.scope = value;
+    } else if (REVIEW_KEYS.test(key)) {
+      if (/^(yes|true|y|x|✅|✔️?)$/i.test(value)) result.reviewed = true;
+    } else if (MEDIA_KEYS.test(key)) {
+      if (normalizeLevel(value) === 'none') result.mediaAttested = true;
+    }
+  }
+
+  result.levels = [...new Set(result.levels)];
+  return result;
+}
+
+// Trailers that AI tools add to commits on their own. These are evidence the
+// contributor's own tooling left behind — a prompt to double-check the
+// disclosure, not an accusation. Extend via `extra-signatures` in the config.
+const AI_SIGNATURES = [
+  { name: 'Claude', pattern: /<noreply@anthropic\.com>/i },
+  { name: 'GitHub Copilot coding agent', pattern: /copilot-swe-agent/i },
+  { name: 'Cursor agent', pattern: /<cursoragent@cursor\.com>/i },
+  { name: 'Aider', pattern: /@aider\.chat>/i },
+  { name: 'Devin', pattern: /devin-ai-integration/i },
+  { name: 'Google Jules', pattern: /google-labs-jules/i },
+];
+
+/** Extract trailer lines (`Key: value`) from the final paragraph of a commit message. */
+function parseTrailers(message) {
+  const paragraphs = String(message ?? '').replace(/\r\n?/g, '\n').trim().split(/\n\s*\n/);
+  if (paragraphs.length < 2) return [];
+  const last = paragraphs[paragraphs.length - 1].split('\n');
+  const trailers = [];
+  for (const line of last) {
+    const m = /^([A-Za-z][A-Za-z0-9-]*):\s+(.+)$/.exec(line.trim());
+    if (m) trailers.push({ key: m[1].toLowerCase(), value: m[2].trim() });
+    else if (!/^\s/.test(line)) return [];
+  }
+  return trailers;
+}
+
+/**
+ * Inspect one commit. `commit` is { sha, message, authorName?, authorEmail?, authorLogin? }.
+ * Returns { sha, isMerge, assistedBy: Tool[], signatures: string[] }.
+ */
+function inspectCommit(commit, extraSignatures = []) {
+  const trailers = parseTrailers(commit.message);
+  const assistedBy = trailers
+    .filter((t) => t.key === 'assisted-by' || t.key === 'generated-by')
+    .map((t) => parseTool(t.value))
+    .filter(Boolean);
+
+  const haystacks = [
+    ...trailers.filter((t) => t.key === 'co-authored-by').map((t) => t.value),
+    `${commit.authorName ?? ''} <${commit.authorEmail ?? ''}>`,
+    commit.authorLogin ?? '',
+  ];
+  const signatures = [
+    ...AI_SIGNATURES,
+    ...extraSignatures.map((s) => ({ name: `custom signature /${s}/`, pattern: new RegExp(s, 'i') })),
+  ]
+    .filter((sig) => haystacks.some((h) => sig.pattern.test(h)))
+    .map((sig) => sig.name);
+
+  return {
+    sha: commit.sha ?? '',
+    isMerge: Boolean(commit.isMerge),
+    assistedBy,
+    signatures: [...new Set(signatures)],
+  };
+}
+
+// ---- src/evaluate.js ----
+
+const FIRST_TIMERS = new Set(['FIRST_TIME_CONTRIBUTOR', 'FIRST_TIMER', 'NONE']);
+const DISCLOSURE_CODES = new Set(['missing-disclosure', 'unknown-level', 'ambiguous-level']);
+
+/** Render untrusted text as an inline code span: no backticks, newlines, or runaway length. */
+function code(value, max = 80) {
+  const s = String(value).replace(/[`\r\n]+/g, ' ').trim();
+  return `\`${s.length > max ? `${s.slice(0, max - 1)}…` : s}\``;
+}
+
+function globToRegExp(glob) {
+  const escaped = glob.split('*').map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  return new RegExp(`^${escaped.join('.*')}$`, 'i');
+}
+
+function exemption(policy, author, labels, draft) {
+  const login = author.login ?? '';
+  if (login && policy.exempt.authors.some((a) => globToRegExp(a).test(login))) return `${code(login)} is exempt`;
+  if (author.association && policy.exempt.associations.includes(author.association)) {
+    return `the author is a repository ${author.association.toLowerCase()}`;
+  }
+  const label = policy.exempt.labels.find((l) => labels.includes(l));
+  if (label) return `the ${code(label)} label is set`;
+  if (draft && policy.drafts === 'skip') return 'the pull request is a draft';
+  return null;
+}
+
+function shortShas(commits, max = 8) {
+  const shas = commits.map((c) => code(c.sha.slice(0, 7)));
+  return shas.length > max ? `${shas.slice(0, max).join(', ')} and ${shas.length - max} more` : shas.join(', ');
+}
+
+function isMedia(file, extensions) {
+  if (file.status === 'removed') return false;
+  const ext = String(file.filename).toLowerCase().split('.').pop();
+  return extensions.includes(ext);
+}
+
+/**
+ * Check one pull request against a resolved policy.
+ *
+ * input: {
+ *   policy, body, draft,
+ *   author: { login, association },
+ *   labels: string[] | {name}[],
+ *   commits: { sha, message, authorName, authorEmail, authorLogin, isMerge }[],
+ *   files: { filename, status, additions, deletions }[],
+ *   changedLines?: number,
+ * }
+ */
+function evaluate(input) {
+  const { policy } = input;
+  const author = input.author ?? {};
+  const labels = (input.labels ?? []).map((l) => (typeof l === 'string' ? l : l.name));
+  const files = input.files ?? [];
+  const disclosure = parseDisclosure(input.body);
+  const commits = (input.commits ?? []).map((c) => inspectCommit(c, policy['extra-signatures']));
+  const allowed = policy['allowed-levels'];
+
+  const findings = [];
+  const add = (severity, id, message) => findings.push({ severity, code: id, message });
+
+  const level = disclosure.levels.length === 1 ? disclosure.levels[0] : null;
+  const tools = disclosure.tools;
+  const commitTools = commits.flatMap((c) => c.assistedBy);
+  const signedCommits = commits.filter((c) => c.signatures.length || c.assistedBy.length);
+  const evidence = [...new Set([
+    ...commits.flatMap((c) => c.signatures),
+    ...commitTools.map((t) => t.raw),
+  ])];
+
+  const exemptReason = exemption(policy, author, labels, input.draft);
+
+  if (!exemptReason) {
+    if (disclosure.levels.length > 1) {
+      add('error', 'ambiguous-level', `The description declares more than one level (${disclosure.levels.map((l) => code(l)).join(', ')}). Please keep exactly one.`);
+    } else if (!level && disclosure.invalidLevels.length) {
+      add('error', 'unknown-level', `${code(disclosure.invalidLevels[0])} is not a disclosure level. Use one of: ${allowed.map((l) => code(l)).join(', ')}.`);
+    } else if (!level && policy.require.disclosure) {
+      add('error', 'missing-disclosure', 'The description does not say whether AI tools were used. Add an `AI-Disclosure:` line.');
+    }
+
+    if (level && !allowed.includes(level)) {
+      add('error', 'level-not-allowed', allowed.length === 1 && allowed[0] === 'none'
+        ? 'This project does not accept contributions made with AI tools.'
+        : `This project does not accept ${code(level)} contributions. Accepted levels: ${allowed.map((l) => code(l)).join(', ')}.`);
+    }
+
+    const assisted = level !== null && level !== 'none';
+    if (assisted) {
+      if (policy.require.tool && tools.length === 0 && commitTools.length === 0) {
+        add('error', 'missing-tool', 'Please name the AI tool with an `Assisted-by:` line, e.g. `Assisted-by: Claude Code:claude-opus-5`.');
+      }
+      for (const t of tools.filter((x) => !x.model)) {
+        add('warning', 'missing-model', `${code(`Assisted-by: ${t.agent}`)} has no model. Adding one (\`Tool:model\`) helps reviewers.`);
+      }
+      if (policy.require.scope && !disclosure.scope) {
+        add('error', 'missing-scope', 'Please describe what the AI did with an `AI-Scope:` line, e.g. `AI-Scope: wrote the tests; I wrote the parser`.');
+      }
+      if (policy.require.attestation && !disclosure.reviewed) {
+        add('error', 'missing-attestation', 'Please tick the box confirming you reviewed every change and can explain it without AI help.');
+      }
+      if (policy.require['commit-trailers']) {
+        const unmarked = commits.filter((c) => !c.isMerge && !c.assistedBy.length && !c.signatures.length);
+        if (unmarked.length) {
+          add('error', 'missing-commit-trailers', `${unmarked.length} commit(s) have no \`Assisted-by:\` trailer: ${shortShas(unmarked)}. Amend them with \`git commit --amend --trailer "Assisted-by: Tool:model"\` or \`git rebase -i\`.`);
+        }
+      }
+      const cap = policy['first-time-contributors']['max-changed-lines'];
+      if (cap > 0 && FIRST_TIMERS.has(author.association)) {
+        const changed = input.changedLines ?? files.reduce((n, f) => n + (f.additions ?? 0) + (f.deletions ?? 0), 0);
+        if (changed > cap) {
+          add('error', 'first-pr-too-large', `Welcome! First AI-assisted contributions here are limited to ${cap} changed lines, and this one changes ${changed}. Please split it up, or open an issue first to talk it through with a maintainer.`);
+        }
+      }
+    }
+
+    if (policy.media['forbid-ai-generated'] && level !== 'none' && !disclosure.mediaAttested) {
+      const media = files.filter((f) => isMedia(f, policy.media.extensions));
+      if (media.length && (assisted || !level)) {
+        const names = media.slice(0, 5).map((f) => code(f.filename, 60)).join(', ');
+        add('error', 'media-attestation', `This project does not accept AI-generated images, audio or video. This PR adds or changes ${media.length} media file(s) (${names}${media.length > 5 ? ', …' : ''}). Please tick the box confirming they were not AI-generated.`);
+      }
+    }
+
+    if (policy.consistency) {
+      if (level === 'none' && tools.length) {
+        add('error', 'inconsistent-disclosure', `The description says ${code('none')} but also lists ${code(`Assisted-by: ${tools[0].raw}`)}. Please make them agree.`);
+      }
+      if (level === 'none' && signedCommits.length) {
+        add('warning', 'commit-trailer-mismatch', `The description says ${code('none')}, but ${signedCommits.length} commit(s) carry AI tool trailers (${evidence.map((e) => code(e, 50)).join(', ')} in ${shortShas(signedCommits)}). If AI was involved, please update the disclosure.`);
+      }
+    }
+  }
+
+  const errors = findings.filter((f) => f.severity === 'error');
+  let status;
+  if (exemptReason) status = 'skip';
+  else if (!errors.length) status = 'pass';
+  else if (policy.enforcement === 'warn' || (input.draft && policy.drafts === 'warn')) status = 'warn';
+  else status = 'fail';
+
+  const wanted = new Set();
+  if (level && policy.labels[level]) wanted.add(policy.labels[level]);
+  if (errors.some((f) => DISCLOSURE_CODES.has(f.code)) && policy.labels.missing) wanted.add(policy.labels.missing);
+  const managed = [...LEVELS.map((l) => policy.labels[l]), policy.labels.missing].filter(Boolean);
+
+  return {
+    status,
+    exemptReason,
+    level,
+    tools: [...tools, ...commitTools.filter((t) => !tools.some((x) => x.raw === t.raw))],
+    evidence,
+    disclosure,
+    findings,
+    labels: {
+      add: [...wanted].filter((l) => !labels.includes(l)),
+      remove: managed.filter((l) => !wanted.has(l) && labels.includes(l)),
+    },
+  };
+}
+
+// ---- src/report.js ----
+
+const MARKER = '<\!-- declared:report -->';
+
+const ATTESTATION_LINE = '- [x] I have reviewed every change in this PR and can explain it without AI help.';
+const MEDIA_LINE = '- [x] None of the images, audio or video in this PR were AI-generated.';
+
+/** A disclosure block the contributor can paste, pre-filled with what we already know. */
+function suggestedDisclosure(policy, result) {
+  const allowed = policy['allowed-levels'];
+  const codes = new Set(result.findings.map((f) => f.code));
+  // Prefer a declared tool; otherwise name the tool whose trailer we saw in the commits.
+  const knownTool = result.tools[0]?.raw ?? (result.evidence[0] ? `${result.evidence[0]}:model` : undefined);
+
+  let level = result.level;
+  if (!level || codes.has('level-not-allowed')) {
+    if (allowed.length === 1) level = allowed[0];
+    else if (result.evidence.length && allowed.includes('ai-assisted')) level = 'ai-assisted';
+    else level = allowed.join(' | ');
+  }
+
+  const lines = [`AI-Disclosure: ${level}`];
+  if (level !== 'none') {
+    lines.push(`Assisted-by: ${knownTool ?? 'Tool:model'}`);
+    if (policy.require.scope || result.disclosure.scope) lines.push(`AI-Scope: ${result.disclosure.scope ?? 'what the AI did, and what you did'}`);
+    if (policy.require.attestation) lines.push('', ATTESTATION_LINE);
+  }
+  if (codes.has('media-attestation')) lines.push(...(lines.at(-1)?.startsWith('- [') ? [] : ['']), MEDIA_LINE);
+  return lines.join('\n');
+}
+
+function policyLink(url) {
+  return url ? `[AI contribution policy](${url})` : 'AI contribution policy';
+}
+
+/** Markdown for the sticky PR comment and the job summary. */
+function renderComment(result, policy, { policyUrl } = {}) {
+  const out = [MARKER];
+  const errors = result.findings.filter((f) => f.severity === 'error');
+  const warnings = result.findings.filter((f) => f.severity === 'warning');
+
+  if (result.status === 'skip') {
+    out.push('#### ⏭️ AI policy check skipped', '', `Skipped because ${result.exemptReason}.`);
+    return out.join('\n');
+  }
+
+  if (errors.length) {
+    out.push(
+      '#### 📝 This pull request needs an AI disclosure update',
+      '',
+      `Thanks for contributing! This project asks everyone to say whether and how AI tools were used — see the ${policyLink(policyUrl)}. ` +
+        'It is not a ban on tools; it tells reviewers where to look. Nothing here tries to detect AI: the check only reads what you wrote.',
+    );
+  } else {
+    out.push('#### ✅ AI disclosure looks good — thank you!');
+  }
+
+  const declared = [];
+  if (result.level) declared.push(`level ${code(result.level)}`);
+  if (result.tools.length) declared.push(`tools ${result.tools.map((t) => code(t.raw, 50)).join(', ')}`);
+  if (declared.length) out.push('', `**Declared:** ${declared.join(' · ')}`);
+
+  if (errors.length) out.push('', '**To do**', ...errors.map((f) => `- ${f.message}`));
+  if (warnings.length) out.push('', '**Worth a look**', ...warnings.map((f) => `- ${f.message}`));
+
+  if (errors.length) {
+    out.push(
+      '',
+      '<details open><summary>Paste this into the PR description and adjust it</summary>',
+      '',
+      '```',
+      suggestedDisclosure(policy, result),
+      '```',
+      '',
+      '</details>',
+    );
+  }
+
+  const footer = [];
+  if (result.status === 'warn') footer.push('This check is advisory and does not block merging.');
+  if (errors.length) footer.push('Editing the description re-runs the check.');
+  if (policy.exempt.labels[0]) footer.push(`Maintainers can skip it with the ${code(policy.exempt.labels[0])} label.`);
+  if (footer.length) out.push('', `<sub>${footer.join(' ')}</sub>`);
+  return out.join('\n');
+}
+
+/** Plain-text report for the CLI. */
+function renderText(result, policy) {
+  const icon = { pass: '✔ pass', warn: '▲ warn', fail: '✖ fail', skip: '– skip' }[result.status];
+  const lines = [`AI policy: ${icon}`];
+  if (result.exemptReason) lines.push(`  skipped because ${result.exemptReason.replace(/`/g, '')}`);
+  if (result.level) lines.push(`  level: ${result.level}`);
+  if (result.tools.length) lines.push(`  tools: ${result.tools.map((t) => t.raw).join(', ')}`);
+  for (const f of result.findings) {
+    lines.push(`  ${f.severity === 'error' ? '✖' : '▲'} [${f.code}] ${f.message.replace(/`/g, '')}`);
+  }
+  if (result.findings.some((f) => f.severity === 'error')) {
+    lines.push('', '  Suggested disclosure:', ...suggestedDisclosure(policy, result).split('\n').map((l) => `    ${l}`));
+  }
+  return lines.join('\n');
+}
+
+// ---- src/render.js ----
+
+// Everything a maintainer reads — AI_POLICY.md, the PR template section, the
+// workflow — is generated from the one config file, so the documents and the
+// check can never disagree. No Node APIs here: this also runs in a browser.
+
+const DOC_NOTICE = '<\!-- Generated by declared from .github/ai-policy.yml. Edit that file, then run `npx declared render`. -->';
+const TEMPLATE_START = '<\!-- declared:start -->';
+const TEMPLATE_END = '<\!-- declared:end -->';
+const DEFAULT_USES = 'OWNER/declared@v1';
+
+/** Stable FNV-1a hash of the effective policy (ignores comments and formatting). */
+function policyHash(policy) {
+  const canonical = JSON.stringify(policy, (_, v) =>
+    v && typeof v === 'object' && !Array.isArray(v)
+      ? Object.fromEntries(Object.entries(v).sort(([a], [b]) => a.localeCompare(b)))
+      : v);
+  let h = 0x811c9dc5;
+  for (let i = 0; i < canonical.length; i++) {
+    h ^= canonical.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h.toString(16).padStart(8, '0');
+}
+
+function readDocHash(markdown) {
+  return /<\!-- declared:hash=([0-9a-f]{8}) -->/.exec(markdown ?? '')?.[1] ?? null;
+}
+
+function yamlValue(v) {
+  if (Array.isArray(v)) return `[${v.map(yamlValue).join(', ')}]`;
+  if (typeof v === 'boolean' || typeof v === 'number') return String(v);
+  const s = String(v);
+  const plain = /^[A-Za-z_][A-Za-z0-9._/-]*$/.test(s) && !/^(true|false|null|yes|no|on|off|~)$/i.test(s);
+  return plain ? s : JSON.stringify(s);
+}
+
+/** A fully commented config file for a preset, with optional overrides (e.g. { project, require: {...} }). */
+function renderPolicyYaml(presetName = 'disclose', overrides = {}) {
+  const p = resolvePolicy({ ...overrides, preset: presetName });
+  const v = yamlValue;
+  const lines = [
+    '# AI contribution policy, read by the `declared` GitHub Action and CLI.',
+    `# Started from the "${presetName}" preset: ${PRESETS[presetName].summary}`,
+    '# AI_POLICY.md and the PR template section are generated from this file:',
+    '#   npx declared render',
+    'version: 1',
+    `preset: ${v(presetName)}   # open | disclose | strict | human-only (values below override it)`,
+    `project: ${v(p.project)}`,
+    `policy-url: ${v(p['policy-url'])}`,
+    '',
+    '# Disclosure levels this project accepts: none, ai-assisted, ai-generated, autonomous',
+    `allowed-levels: ${v(p['allowed-levels'])}`,
+    '',
+    'require:',
+    `  disclosure: ${v(p.require.disclosure)}        # the PR description declares a level`,
+    `  tool: ${v(p.require.tool)}              # AI-assisted PRs name the tool: "Assisted-by: Tool:model"`,
+    `  scope: ${v(p.require.scope)}             # ...and say what the AI did: "AI-Scope: ..."`,
+    `  attestation: ${v(p.require.attestation)}       # ...and confirm a human reviewed and understands it`,
+    `  commit-trailers: ${v(p.require['commit-trailers'])}  # ...and mark each commit with an Assisted-by trailer`,
+    '',
+    `consistency: ${v(p.consistency)}   # compare the declaration with AI trailers found in commits`,
+    '',
+    'media:',
+    `  forbid-ai-generated: ${v(p.media['forbid-ai-generated'])}   # PRs adding images/audio/video confirm they are not AI-made`,
+    '',
+    'first-time-contributors:',
+    `  max-changed-lines: ${v(p['first-time-contributors']['max-changed-lines'])}   # size cap for AI-assisted first PRs (0 = none)`,
+    '',
+    'exempt:',
+    `  authors: ${v(p.exempt.authors)}`,
+    `  associations: ${v(p.exempt.associations)}   # e.g. OWNER, MEMBER, COLLABORATOR`,
+    `  labels: ${v(p.exempt.labels)}`,
+    '',
+    `drafts: ${v(p.drafts)}         # warn | enforce | skip`,
+    `enforcement: ${v(p.enforcement)}    # fail = failing check; warn = comment and labels only`,
+    `comment: ${v(p.comment)}`,
+    '',
+    'labels:',
+    ...LEVELS.map((l) => `  ${l}: ${v(p.labels[l])}`),
+    `  missing: ${v(p.labels.missing)}`,
+    '',
+  ];
+  return lines.join('\n');
+}
+
+function exampleDisclosure(policy) {
+  const allowed = policy['allowed-levels'];
+  if (!allowed.some((l) => l !== 'none')) return 'AI-Disclosure: none';
+  const lines = [
+    `AI-Disclosure: ${allowed.includes('ai-assisted') ? 'ai-assisted' : allowed.find((l) => l !== 'none')}`,
+    'Assisted-by: Claude Code:claude-opus-5',
+  ];
+  if (policy.require.scope) lines.push('AI-Scope: generated the test fixtures; I wrote and reviewed the parser changes');
+  if (policy.require.attestation) lines.push('', '- [x] I have reviewed every change in this PR and can explain it without AI help.');
+  return lines.join('\n');
+}
+
+function stance(policy) {
+  const allowed = policy['allowed-levels'];
+  if (allowed.length === 1 && allowed[0] === 'none') {
+    return 'This project does not accept contributions created with generative AI tools. Every pull request confirms that no AI tools were used.';
+  }
+  const parts = ['AI tools are welcome here, as long as a person stays responsible for the result.'];
+  parts.push(policy.enforcement === 'warn'
+    ? 'Please say whether and how you used them; it helps reviewers focus.'
+    : 'Every pull request must say whether and how they were used.');
+  return parts.join(' ');
+}
+
+/** AI_POLICY.md, in plain language, derived from the policy. */
+function renderPolicyDoc(policy) {
+  const p = policy;
+  const allowed = p['allowed-levels'];
+  const human = allowed.length === 1 && allowed[0] === 'none';
+  const title = p.project ? `# AI contribution policy for ${p.project}` : '# AI contribution policy';
+  const out = [DOC_NOTICE, `<\!-- declared:hash=${policyHash(p)} -->`, '', title, '', stance(p), ''];
+
+  out.push('## What to write in your pull request', '');
+  out.push('Add these lines to the pull request description (the template already has them):', '');
+  out.push('```', exampleDisclosure(p), '```', '');
+
+  out.push('## Disclosure levels', '', '| Level | Meaning | Accepted |', '| --- | --- | --- |');
+  for (const level of LEVELS) {
+    out.push(`| \`${level}\` | ${LEVEL_INFO[level]} | ${allowed.includes(level) ? 'yes' : 'no'} |`);
+  }
+  out.push('');
+
+  const rules = [];
+  if (p.require.disclosure) rules.push('Every pull request declares exactly one level with `AI-Disclosure:`.');
+  if (!human) {
+    if (p.require.tool) rules.push('If AI helped, name the tool and model with `Assisted-by: Tool:model` (the Linux kernel format). List several tools with commas.');
+    if (p.require.scope) rules.push('If AI helped, describe what it did with `AI-Scope:`.');
+    if (p.require.attestation) rules.push('If AI helped, confirm you reviewed every change and can explain it without AI help. If you cannot, please do not submit it.');
+    if (p.require['commit-trailers']) rules.push('If AI helped, each commit carries an `Assisted-by: Tool:model` trailer.');
+    const cap = p['first-time-contributors']['max-changed-lines'];
+    if (cap > 0) rules.push(`First-time contributors keep AI-assisted pull requests under ${cap} changed lines. For anything bigger, open an issue first.`);
+  }
+  if (p.media['forbid-ai-generated']) rules.push('No AI-generated images, audio or video. Pull requests that add media confirm it was made without AI.');
+  if (p.consistency) rules.push('The disclosure should match your commits. Many AI tools add `Co-authored-by` or `Assisted-by` trailers on their own; if yours did, disclose it.');
+  if (rules.length) out.push('## Rules', '', ...rules.map((r) => `- ${r}`), '');
+
+  if (!human && !p.require['commit-trailers']) {
+    out.push('## Commits', '', 'Marking commits is optional but appreciated:', '', '```', 'git commit --trailer "Assisted-by: Claude Code:claude-opus-5"', '```', '');
+  }
+
+  out.push(
+    '## How this is checked',
+    '',
+    'An automated check reads the pull request description, commit messages and changed file names.',
+    'It does **not** try to detect AI-written code; it relies on honest disclosure.',
+    p.enforcement === 'warn'
+      ? 'Problems are reported in a comment and never block merging.'
+      : 'If something is missing, a comment explains how to fix it and the check fails until the description is updated.',
+    '',
+  );
+
+  const exempt = [];
+  if (p.exempt.authors.length) exempt.push(`bots and accounts: ${p.exempt.authors.map((a) => `\`${a}\``).join(', ')}`);
+  if (p.exempt.associations.length) exempt.push(`repository roles: ${p.exempt.associations.map((a) => a.toLowerCase()).join(', ')}`);
+  if (p.exempt.labels.length) exempt.push(`pull requests labelled ${p.exempt.labels.map((l) => `\`${l}\``).join(', ')}`);
+  if (exempt.length) out.push('These are exempt from the check:', '', ...exempt.map((e) => `- ${e}`), '');
+
+  if (p.notes) out.push('## Notes from the maintainers', '', p.notes.trim(), '');
+  return out.join('\n');
+}
+
+/** The disclosure block inserted into the PR template. */
+function renderPrSection(policy) {
+  const allowed = policy['allowed-levels'];
+  const url = policy['policy-url'];
+  const lines = [TEMPLATE_START, '## AI disclosure', ''];
+  lines.push(`<\!-- Required. See ${url}. Choose one: ${allowed.join(' | ')} -->`);
+  lines.push('AI-Disclosure: ');
+  if (allowed.some((l) => l !== 'none')) {
+    lines.push('<\!-- If AI helped: tool and model, e.g. Claude Code:claude-opus-5 -->');
+    lines.push('Assisted-by: ');
+    if (policy.require.scope) lines.push('<\!-- If AI helped: what did it do, and what did you do? -->', 'AI-Scope: ');
+    if (policy.require.attestation) lines.push('', '- [ ] I have reviewed every change in this PR and can explain it without AI help.');
+  }
+  if (policy.media['forbid-ai-generated']) lines.push('- [ ] None of the images, audio or video in this PR were AI-generated.');
+  lines.push(TEMPLATE_END);
+  return lines.join('\n');
+}
+
+/** Insert or replace the disclosure block in an existing PR template. */
+function mergePrTemplate(existing, section) {
+  const text = existing ?? '';
+  const start = text.indexOf(TEMPLATE_START);
+  const end = text.indexOf(TEMPLATE_END);
+  if (start !== -1 && end > start) {
+    return text.slice(0, start) + section + text.slice(end + TEMPLATE_END.length);
+  }
+  if (!text.trim()) return `${section}\n`;
+  return `${text.replace(/\s*$/, '')}\n\n${section}\n`;
+}
+
+function renderWorkflow({ uses = DEFAULT_USES } = {}) {
+  return `# Checks pull requests against .github/ai-policy.yml.
+#
+# pull_request_target lets the check comment on pull requests from forks.
+# That is safe here because this job never checks out or runs code from the
+# pull request: the action reads the description, commit messages and file
+# names through the API, and reads the policy from the base branch.
+name: AI policy
+
+on:
+  pull_request_target:
+    types: [opened, edited, reopened, synchronize, ready_for_review, converted_to_draft, labeled, unlabeled]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: ai-policy-\${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  ai-policy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ${uses}
+`;
+}
+
+return { resolvePolicy, loadPolicy, PolicyError, PRESETS, LEVELS, LEVEL_INFO, evaluate, renderComment, renderPolicyYaml, renderPolicyDoc, renderPrSection, renderWorkflow, DEFAULT_USES };
+})();
+</script>
+<script>
+(() => {
+  const D = window.Declared;
+  const $ = (id) => document.getElementById(id);
+
+  const REQUIRES = [
+    ['disclosure', 'Declare a level', 'Every PR says <code>AI-Disclosure: …</code>, even when the answer is <code>none</code>.'],
+    ['tool', 'Name the tool', '<code>Assisted-by: Claude Code:claude-opus-5</code>'],
+    ['scope', 'Say what the AI did', '<code>AI-Scope: wrote the tests; I wrote the parser</code>'],
+    ['attestation', 'Confirm a human reviewed it', 'A ticked box: reviewed every change and can explain it.'],
+    ['commit-trailers', 'Mark every commit', 'Each commit carries an <code>Assisted-by:</code> trailer.'],
+  ];
+
+  const FILES = [
+    { id: 'config', tab: 'ai-policy.yml', path: '.github/ai-policy.yml' },
+    { id: 'doc', tab: 'AI_POLICY.md', path: 'AI_POLICY.md' },
+    { id: 'template', tab: 'pull_request_template.md', path: '.github/pull_request_template.md', note: 'add this section' },
+    { id: 'workflow', tab: 'workflows/ai-policy.yml', path: '.github/workflows/ai-policy.yml' },
+  ];
+
+  let preset = 'disclose';
+  let activeFile = 'config';
+  let outputs = {};
+
+  // ---- build the form ----
+  $('presets').innerHTML = Object.entries(D.PRESETS).map(([name, p]) => `
+    <label class="preset" for="preset-${name}">
+      <input type="radio" name="preset" id="preset-${name}" value="${name}"${name === preset ? ' checked' : ''}>
+      <b>${name}</b><span>${p.summary}</span>
+    </label>`).join('');
+
+  $('levels').innerHTML = D.LEVELS.map((level) => `
+    <label class="check" for="level-${level}">
+      <input type="checkbox" id="level-${level}" value="${level}">
+      <span class="t"><code>${level}</code></span>
+      <span class="d">${D.LEVEL_INFO[level]}</span>
+    </label>`).join('');
+
+  $('requires').innerHTML = REQUIRES.map(([key, title, desc]) => `
+    <label class="check" for="req-${key}">
+      <input type="checkbox" id="req-${key}">
+      <span class="t">${title}</span>
+      <span class="d">${desc}</span>
+    </label>`).join('');
+
+  $('tabs').innerHTML = FILES.map((f) => `
+    <button type="button" class="tab" role="tab" id="tab-${f.id}" data-file="${f.id}" aria-selected="${f.id === activeFile}">${f.tab}</button>`).join('');
+
+  function applyPreset(name) {
+    const p = D.resolvePolicy({ preset: name });
+    for (const level of D.LEVELS) $(`level-${level}`).checked = p['allowed-levels'].includes(level);
+    for (const [key] of REQUIRES) $(`req-${key}`).checked = p.require[key];
+    $('consistency').checked = p.consistency;
+    $('media').checked = p.media['forbid-ai-generated'];
+    $('cap').value = p['first-time-contributors']['max-changed-lines'];
+    $('enforcement').value = p.enforcement;
+    $('drafts').value = p.drafts;
+  }
+
+  function readOverrides() {
+    return {
+      project: $('project').value.trim(),
+      'allowed-levels': D.LEVELS.filter((l) => $(`level-${l}`).checked),
+      require: Object.fromEntries(REQUIRES.map(([key]) => [key, $(`req-${key}`).checked])),
+      consistency: $('consistency').checked,
+      media: { 'forbid-ai-generated': $('media').checked },
+      'first-time-contributors': { 'max-changed-lines': Math.max(0, Math.floor(Number($('cap').value) || 0)) },
+      enforcement: $('enforcement').value,
+      drafts: $('drafts').value,
+    };
+  }
+
+  // ---- tiny renderer for the comment markdown this tool produces ----
+  const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  function inline(s) {
+    return s.split(/(`[^`]*`)/).map((part) => {
+      if (part.length >= 2 && part.startsWith('`') && part.endsWith('`')) return `<code>${esc(part.slice(1, -1))}</code>`;
+      return esc(part)
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    }).join('');
+  }
+  function renderMarkdown(md) {
+    const html = [];
+    let list = null;
+    let fence = null;
+    let para = [];
+    const flushPara = () => { if (para.length) { html.push(`<p>${para.map(inline).join(' ')}</p>`); para = []; } };
+    const flushList = () => { if (list) { html.push(`<ul>${list.join('')}</ul>`); list = null; } };
+    for (const line of md.split('\n')) {
+      if (fence) {
+        if (line === '```') { html.push(`<pre><code>${esc(fence.join('\n'))}</code></pre>`); fence = null; } else fence.push(line);
+        continue;
+      }
+      if (line.startsWith('<!--')) continue;
+      if (line === '```') { flushPara(); flushList(); fence = []; continue; }
+      let m;
+      if ((m = /^#### (.*)$/.exec(line))) { flushPara(); flushList(); html.push(`<h4>${inline(m[1])}</h4>`); continue; }
+      if ((m = /^- (.*)$/.exec(line))) { flushPara(); (list ??= []).push(`<li>${inline(m[1])}</li>`); continue; }
+      if ((m = /^<details open><summary>(.*)<\/summary>$/.exec(line))) { flushPara(); flushList(); html.push(`<details open><summary>${inline(m[1])}</summary>`); continue; }
+      if (line === '</details>') { flushPara(); flushList(); html.push('</details>'); continue; }
+      if ((m = /^<sub>(.*)<\/sub>$/.exec(line))) { flushPara(); flushList(); html.push(`<p class="sub">${inline(m[1])}</p>`); continue; }
+      if (line.trim() === '') { flushPara(); flushList(); continue; }
+      flushList();
+      para.push(line);
+    }
+    flushPara(); flushList();
+    return html.join('');
+  }
+
+  // ---- render everything ----
+  const STAMP = { pass: 'CLEARED', fail: 'HELD', warn: 'NOTED', skip: 'EXEMPT' };
+  let lastStatus = null;
+
+  function update() {
+    const overrides = readOverrides();
+    let policy;
+    try {
+      policy = D.resolvePolicy({ ...overrides, preset });
+    } catch (err) {
+      outputs = null;
+      $('file-body').innerHTML = `<span class="error">${esc(err.message)}</span>`;
+      $('hash-label').textContent = 'incomplete';
+      $('comment-body').innerHTML = '<p class="quiet">Fix the policy to preview a pull request.</p>';
+      $('stamp').hidden = true;
+      return;
+    }
+
+    const yaml = D.renderPolicyYaml(preset, overrides);
+    outputs = {
+      config: yaml,
+      doc: D.renderPolicyDoc(policy),
+      template: D.renderPrSection(policy),
+      workflow: D.renderWorkflow({ uses: $('uses').value.trim() || D.DEFAULT_USES }),
+    };
+    const doc = outputs.doc;
+    $('hash-label').textContent = `hash ${/hash=([0-9a-f]+)/.exec(doc)[1]}`;
+    const args = ['npx declared init', `--preset ${preset}`];
+    if (overrides.project) args.push(`--project ${/^[\w.-]+$/.test(overrides.project) ? overrides.project : JSON.stringify(overrides.project)}`);
+    $('cli-cmd').textContent = `${args.join(' ')}   # then edit .github/ai-policy.yml and run: npx declared render`;
+    showFile();
+
+    const commits = $('sample-commits').value.split(/^---\s*$/m).map((m, i) => ({ sha: `${(i + 1).toString(16)}a3f9c2e81b`, message: m.trim() })).filter((c) => c.message);
+    const files = $('sample-files').value.split(',').map((f) => f.trim()).filter(Boolean).map((filename) => ({ filename, status: 'added' }));
+    const result = D.evaluate({
+      policy,
+      body: $('sample-body').value,
+      author: { login: 'contributor', association: $('sample-author').value },
+      commits,
+      files,
+      changedLines: Math.max(0, Number($('sample-lines').value) || 0),
+    });
+
+    const md = D.renderComment(result, policy, { policyUrl: 'https://github.com/OWNER/REPO/blob/main/AI_POLICY.md' });
+    const quiet = result.status === 'pass' && !result.findings.length;
+    $('comment-body').innerHTML = renderMarkdown(md) + (quiet ? '<p class="quiet">On a real PR the bot stays silent here: no comment unless it has something to say.</p>' : '');
+    const stamp = $('stamp');
+    stamp.hidden = false;
+    stamp.dataset.status = result.status;
+    stamp.textContent = STAMP[result.status];
+    if (lastStatus !== null && lastStatus !== result.status) {
+      stamp.classList.remove('thump');
+      void stamp.offsetWidth;
+      stamp.classList.add('thump');
+    }
+    lastStatus = result.status;
+  }
+
+  function showFile() {
+    const f = FILES.find((x) => x.id === activeFile);
+    for (const tab of document.querySelectorAll('.tab')) tab.setAttribute('aria-selected', String(tab.dataset.file === activeFile));
+    $('file-body').setAttribute('aria-labelledby', `tab-${f.id}`);
+    $('file-path').textContent = f.note ? `${f.path} (${f.note})` : f.path;
+    if (outputs) $('file-body').textContent = outputs[activeFile];
+  }
+
+  // ---- events ----
+  $('policy-form').addEventListener('change', (e) => {
+    if (e.target.name === 'preset') { preset = e.target.value; applyPreset(preset); }
+    update();
+  });
+  $('policy-form').addEventListener('input', (e) => { if (e.target.matches('input[type="text"], input[type="number"]')) update(); });
+  $('policy-form').addEventListener('submit', (e) => e.preventDefault());
+  for (const id of ['sample-body', 'sample-commits', 'sample-files', 'sample-author', 'sample-lines']) $(id).addEventListener('input', update);
+  $('sample-author').addEventListener('change', update);
+
+  $('tabs').addEventListener('click', (e) => {
+    const tab = e.target.closest('.tab');
+    if (!tab) return;
+    activeFile = tab.dataset.file;
+    showFile();
+  });
+  $('tabs').addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    const i = FILES.findIndex((f) => f.id === activeFile);
+    activeFile = FILES[(i + (e.key === 'ArrowRight' ? 1 : FILES.length - 1)) % FILES.length].id;
+    showFile();
+    $(`tab-${activeFile}`).focus();
+  });
+
+  $('copy').addEventListener('click', async () => {
+    if (!outputs) return;
+    const btn = $('copy');
+    try {
+      await navigator.clipboard.writeText(outputs[activeFile]);
+      btn.textContent = 'Copied';
+    } catch {
+      const range = document.createRange();
+      range.selectNodeContents($('file-body'));
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      btn.textContent = 'Selected: press ⌘C / Ctrl+C';
+    }
+    setTimeout(() => { btn.textContent = 'Copy file'; }, 1800);
+  });
+
+  // ---- example state ----
+  $('sample-body').value = 'Speeds up cache lookups by memoising key hashing.\n\nAI-Disclosure: ai-generated\nAI-Scope: drafted the memoisation; I rewrote eviction\n';
+  $('sample-commits').value = 'perf: memoise cache key hashing\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>\n---\ntest: cover eviction under memoisation';
+  applyPreset(preset);
+  update();
+})();
+</script>
