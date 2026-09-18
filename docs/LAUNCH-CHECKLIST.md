@@ -1,34 +1,45 @@
 # Launch checklist
 
-Ordered. Each block is doable in one sitting. Only the items marked (you)
-need accounts or signatures that are yours alone; everything else can be
-prepared by an agent session in this repo.
+Status as of 18 Sep 2026: **the free tier is LIVE.** GitHub account and repo,
+npm package, and self-governance are done (section 0-2 below, ticked). What
+remains is optional reach (Marketplace listing, Pages site) and the real work
+of section 4, getting the first adopters.
 
-## 0. Decisions (10 minutes, you)
+Owner is the GitHub/npm account `portolanbe` (personal account, not an org).
+The npm package is `declared-ai`; the repo is https://github.com/portolanbe/declared.
 
-- [ ] Confirm the npm package name. Default in the code: `declared-ai`
-      (plain `declared` is taken). One constant to change: `NPM_PACKAGE` in
-      `src/render.js`, plus `name` in package.json, plus README mentions.
-- [ ] Confirm the GitHub org name that will own the public repo and the
-      action. Checked 18 Sep 2026: `portolan` is taken (unrelated user);
-      `portolan-be` is free. Squat it now either way (you).
-- [ ] npm alternative: the scoped name `@portolan/declared` is unpublished;
-      creating the free npm org `portolan` would allow it and ties the
-      package to the company. Scoped names need `--access public` on publish.
+## 0. Decisions - DONE
 
-## 1. Repository goes public
+- [x] npm package name: `declared-ai` (plain `declared` was taken). Published.
+- [x] GitHub identity: personal account `portolanbe` owns the repo. An org can
+      be added later if the company wants multi-member permissions; not needed
+      for a one-person launch.
 
-- [ ] Create the public repo under the chosen org; push this tree (you).
-- [ ] Fill `repository`, `homepage`, `bugs` in package.json with the real URL.
-- [ ] Enable the site: `scripts/build-site.js` output on GitHub Pages.
-- [ ] Add a CI workflow: `node --test` on push and PR (declared runs on its
-      own PRs, obviously: `npx declared-ai init` on this repo too).
+## 1. Repository public - DONE
 
-## 2. npm publish
+- [x] Public repo live at https://github.com/portolanbe/declared (published
+      via GitHub Desktop; the token+terminal path fought us, Desktop won).
+- [x] LICENSE, README, action.yml carry Portolan BV copyright.
+- [x] CI workflow added: `.github/workflows/test.yml` runs `node --test` on
+      push and PR.
+- [x] declared governs its own repo: `.github/ai-policy.yml`, AI_POLICY.md,
+      PR template section, and the AI-policy workflow are in place; `doctor`
+      passes. The repo is now its own live demo.
+- [ ] `.gitignore` added (protects the npm recovery codes and .DS_Store).
+      REMINDER: move `access npm/npm_recovery_codes.txt` OUT of the repo folder
+      to a password manager; git-ignore protects this repo but secrets should
+      not live in a synced project folder.
+- [ ] Optional: fill `repository`, `homepage`, `bugs` in package.json with the
+      repo URL (cosmetic; npmjs.com/package/declared-ai already links via author).
+- [ ] Optional: enable GitHub Pages for the docs site (`scripts/build-site.js`
+      output). Two clicks in the browser: repo Settings -> Pages -> Source =
+      Deploy from a branch, branch = main, folder = /site (or build to /docs).
 
-- [ ] `npm publish` from the repo root (needs `npm login`) (you).
-- [ ] Verify: `npx declared-ai@latest presets` works on a clean machine.
-- [ ] Tag `v0.3.0`, create the GitHub release, paste the CHANGELOG entry.
+## 2. npm publish - DONE
+
+- [x] Published `declared-ai@0.3.0` to npm (2FA enabled; publishing needs it).
+- [x] Verified live: `npx declared-ai init` resolves for anyone.
+- [ ] Optional: tag `v0.3.0` on GitHub and cut a release with the CHANGELOG entry.
 
 ## 3. Action on the Marketplace (free listing)
 

@@ -1,0 +1,28 @@
+# Checks pull requests against .github/ai-policy.yml.
+#
+# pull_request_target lets the check comment on pull requests from forks.
+# That is safe here because this job never checks out or runs code from the
+# pull request: the action reads the description, commit messages and file
+# names through the API, and reads the policy from the base branch.
+name: AI policy
+
+on:
+  pull_request_target:
+    types: [opened, edited, reopened, synchronize, ready_for_review, converted_to_draft, labeled, unlabeled]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: ai-policy-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  ai-policy:
+    runs-on: ubuntu-latest
+    steps:
+      - run: npx --yes declared-ai@latest run-action
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

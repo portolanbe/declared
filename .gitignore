@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+
+# Secrets and local-only material — never commit
+access npm/
+*recovery*.txt
+*.pem
+.env
+.env.*
+
+# OS and editor cruft
+.DS_Store
+*.log
+.reports/

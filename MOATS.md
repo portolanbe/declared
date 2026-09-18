@@ -15,7 +15,9 @@ reviews gets its plan changed, not its wording.
   resistance.
 - Metric: public repositories containing `.github/ai-policy.yml` (GitHub code
   search), and named projects that adopted it.
-- Now (Sept 2026): 0. Not shipped.
+- Now (18 Sep 2026): shipped. declared-ai@0.3.0 is on npm and the repo
+  (portolanbe/declared) governs itself with ai-policy.yml. Count of OTHER
+  repos carrying the format: 0 (the clock starts now).
 - Moves: publish; convert two or three visible OSS projects that already have
   hand-rolled AI policies; keep the format boring, documented and versioned.
 - Kill signal: GitHub ships a native config format with real adoption while

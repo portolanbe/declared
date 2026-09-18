@@ -1,0 +1,42 @@
+# AI contribution policy, read by the `declared` GitHub Action and CLI.
+# Started from the "disclose" preset: AI welcome with disclosure: say which tool, and confirm a human reviewed it.
+# AI_POLICY.md and the PR template section are generated from this file:
+#   npx declared render
+version: 1
+preset: disclose   # open | disclose | strict | human-only (values below override it)
+project: declared
+policy-url: AI_POLICY.md
+
+# Disclosure levels this project accepts: none, ai-assisted, ai-generated, autonomous
+allowed-levels: [none, ai-assisted, ai-generated]
+
+require:
+  disclosure: true        # the PR description declares a level
+  tool: true              # AI-assisted PRs name the tool: "Assisted-by: Tool:model"
+  scope: false             # ...and say what the AI did: "AI-Scope: ..."
+  attestation: true       # ...and confirm a human reviewed and understands it
+  commit-trailers: false  # ...and mark each commit with an Assisted-by trailer
+
+consistency: true   # compare the declaration with AI trailers found in commits
+
+media:
+  forbid-ai-generated: false   # PRs adding images/audio/video confirm they are not AI-made
+
+first-time-contributors:
+  max-changed-lines: 0   # size cap for AI-assisted first PRs (0 = none)
+
+exempt:
+  authors: ["dependabot[bot]", "renovate[bot]", "github-actions[bot]"]
+  associations: [OWNER, MEMBER]   # e.g. OWNER, MEMBER, COLLABORATOR
+  labels: [skip-ai-policy]
+
+drafts: warn         # warn | enforce | skip
+enforcement: fail    # fail = failing check; warn = comment and labels only
+comment: true
+
+labels:
+  none: ""
+  ai-assisted: ai-assisted
+  ai-generated: ai-generated
+  autonomous: ai-autonomous
+  missing: needs-ai-disclosure
