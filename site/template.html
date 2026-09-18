@@ -270,7 +270,7 @@
           </div>
           <div class="box">
             <div class="box-label"><label for="uses">Action reference</label><code>uses</code></div>
-            <input type="text" id="uses" value="OWNER/declared@v1" spellcheck="false">
+            <input type="text" id="uses" value="" placeholder="blank = run via npx (recommended)" spellcheck="false">
           </div>
         </div>
       </form>
@@ -283,7 +283,7 @@
           <div class="tabs" role="tablist" aria-label="Generated files" id="tabs"></div>
           <div class="file-bar"><span>Save as <code id="file-path">.github/ai-policy.yml</code></span><button type="button" class="btn" id="copy">Copy file</button></div>
           <pre class="code" id="file-body" role="tabpanel" tabindex="0" aria-live="polite"></pre>
-          <div class="cmd">Prefer a terminal? <code id="cli-cmd">npx declared init --preset disclose</code></div>
+          <div class="cmd">Prefer a terminal? <code id="cli-cmd">npx declared-ai init --preset disclose</code></div>
         </div>
       </section>
 
@@ -472,13 +472,13 @@
       config: yaml,
       doc: D.renderPolicyDoc(policy),
       template: D.renderPrSection(policy),
-      workflow: D.renderWorkflow({ uses: $('uses').value.trim() || D.DEFAULT_USES }),
+      workflow: D.renderWorkflow({ uses: $('uses').value.trim() || null }),
     };
     const doc = outputs.doc;
     $('hash-label').textContent = `hash ${/hash=([0-9a-f]+)/.exec(doc)[1]}`;
-    const args = ['npx declared init', `--preset ${preset}`];
+    const args = ['npx declared-ai init', `--preset ${preset}`];
     if (overrides.project) args.push(`--project ${/^[\w.-]+$/.test(overrides.project) ? overrides.project : JSON.stringify(overrides.project)}`);
-    $('cli-cmd').textContent = `${args.join(' ')}   # then edit .github/ai-policy.yml and run: npx declared render`;
+    $('cli-cmd').textContent = `${args.join(' ')}   # then edit .github/ai-policy.yml and run: npx declared-ai render`;
     showFile();
 
     const commits = $('sample-commits').value.split(/^---\s*$/m).map((m, i) => ({ sha: `${(i + 1).toString(16)}a3f9c2e81b`, message: m.trim() })).filter((c) => c.message);
