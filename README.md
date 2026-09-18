@@ -24,7 +24,7 @@ scipy, QEMU and jj). But every project re-implements the same thing by hand:
 ## Quick start
 
 ```bash
-npx declared init --preset disclose --uses OWNER/declared@v1
+npx declared-ai init
 ```
 
 This writes:
@@ -34,13 +34,19 @@ This writes:
 | `.github/ai-policy.yml` | The policy. The only file you edit. |
 | `AI_POLICY.md` | Plain-language policy, generated from the config. |
 | `.github/pull_request_template.md` | Gains an AI-disclosure section (existing content is kept). |
-| `.github/workflows/ai-policy.yml` | Runs the check on every pull request. |
+| `.github/workflows/ai-policy.yml` | Runs the check on every pull request via `npx declared-ai run-action`. |
 
-After changing the config, run `npx declared render`. `npx declared doctor` fails
-if the docs are out of date, so it works well in CI.
+Commit, push, done: the check runs on the next pull request. No Marketplace
+listing, no hosted service, nothing to install on the repository beyond these
+files. (Prefer a pinned action? `declared init --uses OWNER/declared@v1` emits
+the `uses:` form instead.)
 
-> **Status:** v0.1, not yet published to npm or the Marketplace. Replace
-> `OWNER/declared@v1` with wherever you host the action.
+After changing the config, run `npx declared-ai render`. `npx declared-ai doctor`
+fails if the docs are out of date, so it works well in CI.
+
+> **Status:** v0.3, publish pending. The npm package name is `declared-ai`
+> (plain `declared` is taken by an unrelated package); the command it installs
+> is still `declared`.
 
 ## What contributors write
 
@@ -154,15 +160,32 @@ declared init [--preset P] [--project NAME] [--uses OWNER/REPO@REF] [--force]
 declared render
 declared doctor
 declared check --body FILE|- [--range main..HEAD] [--first-time] [--json]
+declared report [--repo OWNER/NAME] [--since YYYY-MM-DD] [--until YYYY-MM-DD] [--json]
 declared presets
+declared run-action
 ```
 
 `declared check` lets contributors (or their AI tools) validate a PR description
 before opening it:
 
 ```bash
-gh pr view --json body -q .body | npx declared check --body - --range origin/main..HEAD
+gh pr view --json body -q .body | npx declared-ai check --body - --range origin/main..HEAD
 ```
+
+## Audit report
+
+`declared report` reads the merged pull requests of a repository through the
+GitHub API and rolls their disclosures into one report: coverage, levels,
+tools named, and per-PR detail, as Markdown or JSON. Nothing is stored
+anywhere; the repository is the ledger, the report is derived on demand.
+
+```bash
+GITHUB_TOKEN=$(gh auth token) npx declared-ai report --since 2026-01-01
+```
+
+Use it for an internal AI-policy roll-up, an ISO 42001 evidence pack, or a
+due-diligence answer. This command stays free for the repository you point it
+at; running it across a whole organisation on a schedule is the paid tier.
 
 ## Action inputs and outputs
 
@@ -184,4 +207,5 @@ npm test
 
 ## License
 
-MIT
+MIT. Copyright Portolan BV (portolan.be), BE 0687.906.875. The name and any
+future paid tiers remain Portolan's; the code is yours to use under the MIT terms.

@@ -52,3 +52,14 @@ test('bad config and unknown commands fail cleanly', () => {
   assert.match(r.stderr, /unknown preset "nope"/);
   assert.equal(cli(['frobnicate']).status, 1);
 });
+
+test('init without --uses writes an npx workflow that doctor accepts', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'declared-cli-'));
+  const init = cli(['init', '--dir', dir, '--project', 'widgets']);
+  assert.equal(init.status, 0, init.stderr);
+  const workflow = readFileSync(join(dir, '.github/workflows/ai-policy.yml'), 'utf8');
+  assert.match(workflow, /npx --yes declared-ai@latest run-action/);
+  assert.doesNotMatch(workflow, /OWNER\/declared/);
+  assert.match(init.stdout, /Next steps:/);
+  assert.equal(cli(['doctor', '--dir', dir]).status, 0, 'doctor should pass on a fresh init');
+});

@@ -10,6 +10,7 @@ import {
   DEFAULT_USES, TEMPLATE_START, mergePrTemplate, policyHash, readDocHash,
   renderPolicyDoc, renderPolicyYaml, renderPrSection, renderWorkflow,
 } from '../src/render.js';
+import { buildAudit, renderAuditMarkdown } from '../src/audit.js';
 
 const HELP = `declared: AI contribution policy as code
 
@@ -20,10 +21,14 @@ Usage:
       Regenerate AI_POLICY.md and the PR template section from .github/ai-policy.yml.
   declared check --body FILE|- [--range BASE..HEAD] [--first-time] [--json]
       Check a PR description (and optionally commits) locally before you open the PR.
+  declared report [--repo OWNER/NAME] [--since YYYY-MM-DD] [--until YYYY-MM-DD] [--json]
+      Roll merged pull request disclosures into one audit report (needs GITHUB_TOKEN).
   declared doctor
       Validate the config and confirm the generated files are up to date.
   declared presets
       List the built-in presets.
+  declared run-action
+      Run the pull request check inside GitHub Actions (used by the generated workflow).
 
 Options:
   --dir PATH      Repository root (default: current directory)
@@ -99,7 +104,7 @@ const commands = {
     const files = [
       [join(root, opts.config), yaml],
       [docPath(root, policy), renderPolicyDoc(policy)],
-      [join(root, '.github/workflows/ai-policy.yml'), renderWorkflow({ uses: opts.uses ?? DEFAULT_USES })],
+      [join(root, '.github/workflows/ai-policy.yml'), renderWorkflow({ uses: opts.uses })],
     ];
     for (const [path, content] of files) {
       if (existsSync(path) && !opts.force) {
@@ -112,7 +117,13 @@ const commands = {
     const template = findTemplate(root);
     write(template, mergePrTemplate(read(template), renderPrSection(policy)));
     console.log(`  update ${template.slice(root.length + 1)} (AI disclosure section)`);
-    if (!opts.uses) console.log(`\nReplace ${DEFAULT_USES} in .github/workflows/ai-policy.yml with the published action reference.`);
+    console.log([
+      '',
+      'Next steps:',
+      '  1. Commit these files and push. The check runs on the next pull request.',
+      '  2. Try it locally: gh pr view --json body -q .body | npx declared check --body -',
+      '  3. After changing the config, run `npx declared render` (doctor flags drift in CI).',
+    ].join('\n'));
     return 0;
   },
 
@@ -174,9 +185,37 @@ const commands = {
     else console.log(renderText(result, policy));
     return result.status === 'fail' ? 1 : 0;
   },
+
+  async report(opts, root) {
+    let repoArg = opts.repo;
+    if (!repoArg) {
+      try {
+        const url = git(['remote', 'get-url', 'origin'], root).trim();
+        repoArg = /github\.com[/:]([^/]+)\/([^/.]+)/.exec(url)?.slice(1, 3).join('/');
+      } catch { /* no git remote; fall through to the error below */ }
+    }
+    const [owner, repo] = (repoArg ?? '').split('/');
+    if (!owner || !repo) throw new Error('Pass --repo OWNER/NAME (no GitHub remote found to infer it from).');
+    const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
+    if (!token) throw new Error('Set GITHUB_TOKEN (or GH_TOKEN) so the report can read merged pull requests.');
+    const report = await buildAudit({
+      owner, repo, token,
+      since: opts.since ?? null,
+      until: opts.until ?? null,
+      limit: opts.limit ? Number(opts.limit) : 1000,
+    });
+    console.log(opts.json ? JSON.stringify(report, null, 2) : renderAuditMarkdown(report));
+    return 0;
+  },
+
+  async 'run-action'() {
+    const { run } = await import('../src/action.js');
+    const result = await run();
+    return result.status === 'fail' ? 1 : 0;
+  },
 };
 
-export function main(argv = process.argv.slice(2)) {
+export async function main(argv = process.argv.slice(2)) {
   const { values, positionals } = parseArgs({
     args: argv,
     allowPositionals: true,
@@ -191,6 +230,10 @@ export function main(argv = process.argv.slice(2)) {
       range: { type: 'string' },
       'first-time': { type: 'boolean', default: false },
       json: { type: 'boolean', default: false },
+      repo: { type: 'string' },
+      since: { type: 'string' },
+      until: { type: 'string' },
+      limit: { type: 'string' },
       help: { type: 'boolean', short: 'h', default: false },
     },
   });
@@ -204,12 +247,14 @@ export function main(argv = process.argv.slice(2)) {
     console.error(`Unknown command "${name}".\n\n${HELP}`);
     return 1;
   }
-  return command(values, resolve(values.dir));
+  return await command(values, resolve(values.dir));
 }
 
-try {
-  process.exitCode = main();
-} catch (err) {
-  console.error(err instanceof PolicyError ? err.message : `declared: ${err.message}`);
-  process.exitCode = 1;
-}
+main()
+  .then((code) => {
+    process.exitCode = code;
+  })
+  .catch((err) => {
+    console.error(err instanceof PolicyError ? err.message : `declared: ${err.message}`);
+    process.exitCode = 1;
+  });

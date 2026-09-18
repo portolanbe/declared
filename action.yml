@@ -1,6 +1,6 @@
 name: declared - AI contribution policy
 description: Check pull requests against your AI contribution policy. Reads disclosures; never guesses. Zero dependencies.
-author: declared contributors
+author: Portolan BV
 branding:
   icon: check-circle
   color: green

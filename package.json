@@ -1,6 +1,6 @@
 {
-  "name": "declared",
-  "version": "0.1.0",
+  "name": "declared-ai",
+  "version": "0.3.0",
   "description": "AI contribution policy as code: one config drives your AI_POLICY.md, PR template and a zero-dependency GitHub Action that checks disclosures.",
   "type": "module",
   "bin": {
@@ -25,5 +25,7 @@
     "maintainers",
     "assisted-by"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "author": "Portolan BV <info@portolan.be> (https://portolan.be)",
+  "homepage": "https://portolan.be"
 }
