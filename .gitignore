@@ -12,3 +12,6 @@ access npm/
 .DS_Store
 *.log
 .reports/
+
+# Private planning docs (kept local, never public)
+_private/
